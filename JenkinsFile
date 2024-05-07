@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                // Fetch the webhook payload from Bitbucket
+                script {
+                    def payload = readJSON text: env.BITBUCKET_PAYLOAD
+                    def commits = payload.commits
+                    for (commit in commits) {
+                        def files = commit.files
+                        for (file in files) {
+                            echo "Changed file: ${file}"
+                            // Call Terraform script to create Lambda function
+                            executeTerraform(file)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+def executeTerraform(file) {
+    // Call Terraform script to create Lambda function
+    sh "terraform apply -var 'file=${file}'"
+}
